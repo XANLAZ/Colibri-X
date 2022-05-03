@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+	<string name="ActionBarDecoration">Decoración de la barra de título</string>
+	<string name="Snowflakes">Copos de nieve</string>
+	<string name="Fireworks">Fuegos artificiales</string>
+</resources>

@@ -1,0 +1,5 @@
+files:
+  - source: /TMessagesProj/src/main/res/values/strings_colibrix.xml
+    translation: /TMessagesProj/src/main/res/values-%two_letters_code%/%original_file_name%
+  - source: /TMessagesProj/src/main/res/values/strings_colibri.xml
+    translation: /TMessagesProj/src/main/res/values-%two_letters_code%/%original_file_name%

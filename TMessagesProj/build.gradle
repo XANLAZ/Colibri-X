@@ -1,0 +1,180 @@
+import java.nio.file.Files
+import java.nio.file.Paths
+import org.eclipse.jgit.internal.storage.file.FileRepository
+
+plugins {
+    id 'com.android.application'
+    id 'com.google.gms.google-services'
+}
+
+configurations.all {
+    exclude group: 'com.google.firebase', module: 'firebase-core'
+    exclude group: 'androidx.recyclerview', module: 'recyclerview'
+}
+
+dependencies {
+    implementation 'androidx.core:core:1.7.0'
+    implementation 'androidx.palette:palette:1.0.0'
+    implementation 'androidx.exifinterface:exifinterface:1.3.3'
+    implementation 'androidx.dynamicanimation:dynamicanimation:1.0.0'
+    implementation 'androidx.sharetarget:sharetarget:1.2.0-rc01'
+
+    compileOnly 'org.checkerframework:checker-qual:3.21.0'
+    compileOnly 'org.checkerframework:checker-compat-qual:2.5.5'
+    implementation 'com.google.firebase:firebase-messaging:23.0.3'
+    implementation 'com.google.firebase:firebase-appindexing:20.0.0'
+    implementation 'com.google.android.gms:play-services-maps:18.0.2'
+    implementation 'com.google.android.gms:play-services-auth-api-phone:18.0.1'
+    implementation 'com.google.android.gms:play-services-vision:20.1.3'
+    implementation 'com.google.android.gms:play-services-wearable:17.1.0'
+    implementation 'com.google.android.gms:play-services-location:19.0.1'
+    implementation 'com.googlecode.mp4parser:isoparser:1.0.6'
+    implementation 'com.stripe:stripe-android:2.0.2'
+    implementation 'com.google.mlkit:language-id:17.0.3'
+    implementation files('libs/libgsaverification-client.aar')
+
+    implementation "androidx.browser:browser:1.4.0"
+    implementation 'com.android.billingclient:billing:4.1.0'
+    implementation 'com.getkeepsafe.relinker:relinker:1.4.4'
+    implementation 'io.github.vvb2060.ndk:xposeddetector:2.2'
+    implementation 'org.lsposed.hiddenapibypass:hiddenapibypass:4.3'
+    implementation files('libs/org.tcp2ws.jar')
+    implementation files('libs/org.translator.jar')
+
+    def appCenterSdkVersion = '4.4.3'
+    implementation "com.microsoft.appcenter:appcenter-analytics:${appCenterSdkVersion}"
+    implementation "com.microsoft.appcenter:appcenter-crashes:${appCenterSdkVersion}"
+
+    coreLibraryDesugaring 'com.android.tools:desugar_jdk_libs:1.1.5'
+}
+
+ext.abiCodes = ['universal':0, 'armeabi-v7a':1, 'arm64-v8a':5, x86:2, x86_64:6]
+
+def refId = new FileRepository(rootProject.file(".git")).getRefDatabase().exactRef("HEAD").getObjectId().name()
+
+android {
+    compileSdkVersion 32
+    buildToolsVersion '32.0.0'
+    ndkVersion "21.4.7075529"
+
+    defaultConfig.applicationId = "org.viento.colibrix"
+
+    sourceSets.main.jniLibs.srcDirs = ['./jni/']
+
+    buildFeatures {
+        prefab true
+    }
+
+    externalNativeBuild {
+        cmake {
+            path 'jni/CMakeLists.txt'
+        }
+    }
+
+    lint {
+        checkReleaseBuilds false
+        disable 'MissingTranslation', 'ExtraTranslation', 'BlockedPrivateApi'
+    }
+
+    packagingOptions {
+        resources {
+            excludes += '**'
+        }
+    }
+
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_11
+        targetCompatibility JavaVersion.VERSION_11
+
+        coreLibraryDesugaringEnabled true
+    }
+    Properties localProperties = new Properties()
+    if (project.rootProject.file('local.properties').exists()) {
+        localProperties.load(project.rootProject.file('local.properties').newDataInputStream())
+    }
+
+    signingConfigs {
+        if (localProperties.getProperty("storeFile") != null) {
+            sign {
+                storeFile file(localProperties.getProperty("storeFile"))
+                storePassword localProperties.getProperty("storePassword")
+                keyAlias localProperties.getProperty("keyAlias")
+                keyPassword localProperties.getProperty("keyPassword")
+            }
+        }
+    }
+
+    buildTypes {
+        debug {
+            if (localProperties.getProperty("storeFile") != null) {
+                signingConfig signingConfigs.sign
+            }
+            applicationIdSuffix ".beta"
+        }
+
+        release {
+            minifyEnabled true
+            shrinkResources true
+            if (localProperties.getProperty("storeFile") != null) {
+                signingConfig signingConfigs.sign
+            } else {
+                signingConfig signingConfigs.debug
+            }
+            proguardFiles 'proguard-rules.pro'
+            ndk.debugSymbolLevel 'FULL'
+        }
+    }
+
+    defaultConfig.versionCode = 2638
+
+    applicationVariants.all { variant ->
+        variant.outputs.all { output ->
+            def abi = output.getFilter('ABI')
+            if (abi == null) abi = 'universal'
+            outputFileName = "ColibriX-${defaultConfig.versionName}-${defaultConfig.versionCode}-${abi}.apk"
+            def abiVersionCode = project.ext.abiCodes.get(abi)
+            output.versionCodeOverride = defaultConfig.versionCode * 10 + abiVersionCode
+        }
+    }
+
+    defaultConfig {
+        minSdkVersion 21
+        targetSdkVersion 32
+        versionName "8.7.4.1"
+
+        externalNativeBuild {
+            cmake {
+                version '3.10.2'
+                arguments '-DANDROID_STL=c++_static', '-DANDROID_PLATFORM=android-21'
+            }
+        }
+    }
+
+    bundle {
+        language {
+            enableSplit = false
+        }
+    }
+
+    splits.abi {
+        enable true
+        universalApk true
+    }
+
+    dependenciesInfo.includeInApk false
+}
+
+def patchBundleReleaseManifest = task('patchBundleReleaseManifest').doLast {
+    def manifest = Paths.get(project.buildDir.path, 'intermediates',
+            'bundle_manifest', 'release', 'AndroidManifest.xml')
+    def newManifest = manifest.getText()
+    newManifest = newManifest.replace("<uses-permission android:name=\"android.permission.UPDATE_PACKAGES_WITHOUT_USER_ACTION\" />", "")
+    newManifest = newManifest.replace("<uses-permission android:name=\"android.permission.READ_CALL_LOG\" />", "")
+    newManifest = newManifest.replace("<uses-permission android:name=\"android.permission.ACCESS_BACKGROUND_LOCATION\" />", "")
+    newManifest = newManifest.replace("colibrix.apks", "colibrix.bundle")
+    Files.write(manifest, newManifest.getBytes())
+}
+
+afterEvaluate {
+    tasks.getByName("processApplicationManifestReleaseForBundle").finalizedBy patchBundleReleaseManifest
+}

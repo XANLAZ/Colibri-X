@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+	<string name="ActionBarDecoration">제목 표시줄 꾸미기</string>
+	<string name="Snowflakes">눈송이</string>
+	<string name="Fireworks">불꽃</string>
+</resources>

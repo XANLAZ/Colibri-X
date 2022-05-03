@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+	<string name="ActionBarDecoration">タイトルバーの装飾</string>
+	<string name="Snowflakes">雪の結晶</string>
+	<string name="Fireworks">花火</string>
+</resources>

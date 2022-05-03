@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+	<string name="ActionBarDecoration">Прикраса заголовка</string>
+	<string name="Snowflakes">Сніжинки</string>
+	<string name="Fireworks">Феєрверк</string>
+</resources>
